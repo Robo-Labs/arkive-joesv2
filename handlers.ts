@@ -4,61 +4,38 @@ import erc20 from './erc20.ts'
 import { OhlcUtil } from './ohlcUtil.ts'
 import { JoesV2LpAbi } from './joesv2LpAbi.ts'
 
-// Alternatively, you can pull this from the chain
-const TOKEN_DECIMALS = 18
 
-const sqrtPriceX96ToBigInt = (sqrtPrice: bigint, decimals: number) => {
-  const numerator1 = sqrtPrice * sqrtPrice
-  return parseFloat(formatUnits(numerator1 / (1n << 192n), decimals))
+const toNumber =(n: bigint, decimals: number) => {
+  return parseFloat(formatUnits(n, decimals))
 }
 
-const abs = (n: bigint) => Number(n < 0n ? -n : n)
+const split256to128s = (n: bigint, leftDecimals: number, rightDecimals: number) => {
+  const mask = (1n << 128n) - 1n
+  return [
+    toNumber(n >> 128n, leftDecimals), 
+    toNumber(n & mask, rightDecimals)
+  ]
+}
 
 // deno-lint-ignore require-await
 export const onSwap: EventHandlerFor<typeof JoesV2LpAbi, 'Swap'> = async (
   { client, store, event },
 ) => {
   const { amountsIn, amountsOut, id, protocolFees, sender, to, totalFees, volatilityAccumulator } = event.args
+  const [amountIn0, amountIn1] = split256to128s(BigInt(amountsIn), 6, 18)
+  const [amountOut0, amountOut1] = split256to128s(BigInt(amountsOut), 6, 18)
+  const price = amountIn0 === 0 ? 
+    amountOut0 / amountIn1 :
+    amountIn0 / amountOut1
+  const vol = amountIn0 || amountOut0
+  const block = await client.getBlock({ blockNumber: event.blockNumber })
+  const ohlc = await OhlcUtil.get(client, store, Number(block.timestamp), event.address, price)
 
-  console.log(amountsIn)
-  console.log(amountsOut)
-
-
-  // const a0 = abs(amount0) / 1e6
-  // const a1 = abs(amount1) / 1e18
-  // const price = Number(a0 / a1)
-  // const block = await client.getBlock({ blockNumber: event.blockNumber })
-  // const ohlc = await OhlcUtil.get(client, store, Number(block.timestamp), event.address, price)
-
-  // if (ohlc.high < price) ohlc.high = price
-  // if (ohlc.low < price) ohlc.low = price
-  // ohlc.close = price
-  // const volUsd =  abs(amount0) / 1e6
-  // ohlc.vol += volUsd
-  // await ohlc.save()
+  if (ohlc.high < price) ohlc.high = price
+  if (price < ohlc.low) ohlc.low = price
+  ohlc.close = price
+  ohlc.vol += vol
+  await ohlc.save()
 }
 
-
-// deno-lint-ignore require-await
-export const onDeposit: EventHandlerFor<typeof JoesV2LpAbi, 'DepositedToBins'> = async (
-  { client, store, event },
-) => {
-  const { amounts } = event.args
-
-  console.log(event.args)
-
-
-  // const a0 = abs(amount0) / 1e6
-  // const a1 = abs(amount1) / 1e18
-  // const price = Number(a0 / a1)
-  // const block = await client.getBlock({ blockNumber: event.blockNumber })
-  // const ohlc = await OhlcUtil.get(client, store, Number(block.timestamp), event.address, price)
-
-  // if (ohlc.high < price) ohlc.high = price
-  // if (ohlc.low < price) ohlc.low = price
-  // ohlc.close = price
-  // const volUsd =  abs(amount0) / 1e6
-  // ohlc.vol += volUsd
-  // await ohlc.save()
-}
 
