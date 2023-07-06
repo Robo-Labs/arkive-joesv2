@@ -1,18 +1,23 @@
 import { createEntity } from 'https://deno.land/x/robo_arkiver@v0.4.15/mod.ts'
 
-// @note: "Index: true" enhances graphql queries
-export const Transfer = createEntity('Transfer', {
-  block: { type: Number, index: true },
-  hash: String,
-  from: String,
-  to: String,
-  value: String,
-})
+interface IOhlc {
+  timestamp: number
+  address: string
+  res: '1h'
+  open: number
+  high: number
+  low: number
+  close: number
+  vol: number
+}
 
-export const Approval = createEntity('Approval', {
-  block: { type: Number, index: true },
-  hash: String,
-  owner: String,
-  spender: String,
-  value: String,
+export const Ohlc = createEntity<IOhlc>('OHLC', {
+  timestamp: { type: Number, index: true },
+  address: String,
+  res: String,
+  open: Number,
+  high: Number,
+  low: Number,
+  close: Number,
+  vol: Number,
 })

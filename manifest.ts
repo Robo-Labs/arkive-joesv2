@@ -1,16 +1,18 @@
 import { Manifest } from 'https://deno.land/x/robo_arkiver@v0.4.15/mod.ts'
-import erc20 from './erc20.ts'
-import { Approval, Transfer } from './entities.ts'
-import { onApproval, onTransfer } from './handlers.ts'
+import { Ohlc } from './entities.ts'
+import { onDeposit, onSwap } from './handlers.ts'
+import { JoesV2LpAbi } from './joesv2LpAbi.ts'
 
-const manifest = new Manifest('weth-events')
+const WETHUSDC_LP = '0xD446eb1660F766d533BeCeEf890Df7A69d26f7d1' as const
+
+const manifest = new Manifest('joes-candles')
 
 manifest
-  .addEntities([Transfer, Approval])
-  .addChain('mainnet', { blockRange: 500n })
-  .addContract('ERC20', erc20)
-  .addSources({ '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2': 4729568n })
-  .addEventHandlers({ 'Transfer': onTransfer })
-  .addEventHandlers({ 'Approval': onApproval })
+  .addEntities([Ohlc])
+  .addChain('avalanche', { blockRange: 200n })
+  .addContract('JoesV2LP', JoesV2LpAbi)
+  .addSources({ [WETHUSDC_LP]: 28371400n })
+  .addEventHandlers({ 'Swap': onSwap })
+  .addEventHandlers({ 'DepositedToBins': onDeposit })
 
 export default manifest.build()
