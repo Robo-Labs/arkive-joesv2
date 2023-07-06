@@ -1,8 +1,8 @@
 import { formatUnits, numberToHex } from 'npm:viem'
 import { type EventHandlerFor } from 'https://deno.land/x/robo_arkiver@v0.4.15/mod.ts'
 import erc20 from './erc20.ts'
-import { OhlcUtil } from './ohlcUtil.ts'
 import { JoesV2LpAbi } from './joesv2LpAbi.ts'
+import { CandleUtil } from './CandleUtil.ts'
 
 
 const toNumber =(n: bigint, decimals: number) => {
@@ -29,13 +29,13 @@ export const onSwap: EventHandlerFor<typeof JoesV2LpAbi, 'Swap'> = async (
     amountIn0 / amountOut1
   const vol = amountIn0 || amountOut0
   const block = await client.getBlock({ blockNumber: event.blockNumber })
-  const ohlc = await OhlcUtil.get(client, store, Number(block.timestamp), event.address, price)
+  const candle = await CandleUtil.get(client, store, Number(block.timestamp), event.address, price)
 
-  if (ohlc.high < price) ohlc.high = price
-  if (price < ohlc.low) ohlc.low = price
-  ohlc.close = price
-  ohlc.vol += vol
-  await ohlc.save()
+  if (candle.high < price) candle.high = price
+  if (price < candle.low) candle.low = price
+  candle.close = price
+  candle.vol += vol
+  await candle.save()
 }
 
 

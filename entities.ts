@@ -1,6 +1,6 @@
 import { createEntity } from 'https://deno.land/x/robo_arkiver@v0.4.15/mod.ts'
 
-interface IOhlc {
+interface ICandle {
   timestamp: number
   address: string
   res: '1h'
@@ -11,7 +11,7 @@ interface IOhlc {
   vol: number
 }
 
-export const Ohlc = createEntity<IOhlc>('OHLC', {
+export const Candle = createEntity<ICandle>('Candle', {
   timestamp: { type: Number, index: true },
   address: String,
   res: String,
